@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const ingredientsRepository = require('./ingredients-repository');
 let Recipe, Instruction, Ingredient, MeasurementUnit;
 let moduleError;
 
@@ -28,7 +29,10 @@ async function getTenNewestRecipes() {
   //   so read the documentation carefully.)
   //
   // The general form of this is
-  //
+  return await Recipe.findAll({
+    limit: 10,
+    order: [['createdAt', 'DESC']]
+  });
   // Model.findAll({
   //     { ... specify your options here... }
   // });
@@ -54,7 +58,15 @@ async function getRecipeById(id) {
   //     }
   //   ]
   // });
-  //
+  return await Recipe.findByPk(id, {
+      include: [
+        Instruction,
+        {
+          model: Ingredient,
+          include: [MeasurementUnit]
+        }
+      ]
+  });
   // Look at the data model in the instructions to see the relations between the
   // Recipe table and the Ingredients and Instructions table. Figure out which
   // of them goes into that form above as "firstDataModel" and
@@ -77,21 +89,30 @@ async function deleteRecipe(id) {
   // Use the findByPk method of the Recipe object to get the object and, then,
   // destroy it. Or, use the Model.destroy({ ... where ... }) method that you
   // saw in the video.
-  //
+  const recipe = await Recipe.findByPk(id);
+  await recipe.destroy();
   // Docs: https://sequelize.org/master/class/lib/model.js~Model.html#instance-method-destroy
 }
 
 async function createNewRecipe(title) {
   // Use the create method of the Recipe object to create a new object and
   // return it.
-  //
+  return await Recipe.create({
+    title
+  });
   // Docs: https://sequelize.org/v5/manual/instances.html#creating-persistent-instances
 }
 
 async function searchRecipes(term) {
   // Use the findAll method of the Recipe object to search for recipes with the
   // given term in its title
-  //
+  return await Recipe.findAll({
+    where: {
+      title: {
+      [Op.iLike]: `%${term}%`
+      }
+    }
+  });
   // Docs: https://sequelize.org/v5/manual/querying.html
 }
 
